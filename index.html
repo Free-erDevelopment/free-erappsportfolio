@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio</title>
+<style>
+:root{
+  --bg:#efebe3;
+  --card:#f6f2eb;
+  --text:#5d320c;
+  --muted:#8d6440;
+  --accent:#ffd400;
+  --border:#d8c2a6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.container{
+  max-width:850px;
+  margin:auto;
+  padding:50px 20px 80px;
+}
+.profile-card{
+  width:min(700px,100%);
+  margin:0 auto;
+  padding:28px 34px;
+  border-radius:24px;
+  border:1.5px solid var(--border);
+  background:var(--card);
+  position:relative;
+}
+.name{
+  margin:0;
+  font-size:42px;
+  font-weight:800;
+}
+.company{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:20px;
+}
+.email-btn{
+  position:absolute;
+  top:24px;
+  right:28px;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:transparent;
+  border:1.5px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  text-decoration:none;
+  color:var(--muted);
+  transition: background .18s ease, color .18s ease, transform .18s ease, border-color .18s ease;
+}
+.email-btn:hover{
+  background:var(--accent);
+  color:#111;
+  border-color:var(--accent);
+  transform:scale(1.08);
+}
+.email-btn svg{
+  width:20px;
+  height:20px;
+  flex-shrink:0;
+}
+.support{
+  text-align:center;
+  margin:24px 0 48px;
+}
+.support a{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 30px;
+  border-radius:999px;
+  background:var(--accent);
+  color:#111;
+  text-decoration:none;
+  font-weight:800;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.support a:hover{
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 10px 28px rgba(0,0,0,.18);
+}
+.support a:active{
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 5px 14px rgba(0,0,0,.14);
+}
+.coffee-icon{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+.projects-title{
+  text-align:center;
+  color:var(--muted);
+  letter-spacing:3px;
+  font-size:14px;
+  font-weight:700;
+  margin-bottom:22px;
+}
+.projects{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.project-card{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:20px;
+  border-radius:24px;
+  border:1.5px solid var(--border);
+  background:var(--card);
+  text-decoration:none;
+  color:inherit;
+  transition:.18s ease;
+}
+.project-card:hover{
+  transform:translateY(-2px);
+}
+.project-icon{
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:16px;
+  flex-shrink:0;
+}
+.project-name{
+  font-size:20px;
+  font-weight:700;
+}
+.project-desc{
+  color:var(--muted);
+  margin-top:3px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="profile-card">
+  <a class="email-btn" id="emailBtn" href="#" target="_blank" title="Send email">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <polyline points="2,4 12,13 22,4"/>
+    </svg>
+  </a>
+  <h1 class="name" id="name"></h1>
+  <div class="company" id="company"></div>
+</div>
+<div class="support">
+  <a id="coffeeLink" href="#" target="_blank">
+    <img class="coffee-icon" src="./assets/buymeacoffee-logo.png" alt="">
+    Support Development
+  </a>
+</div>
+<div class="projects-title">PROJECTS</div>
+<div class="projects" id="projects"></div>
+</div>
+<script>
+const variables = {
+  name: "Cedric",
+  company: "Developing @ Free-er Apps",
+  email: "freeerapps.dev@gmail.com",
+  buyMeACoffeeUrl: "https://buymeacoffee.com/free.erapps",
+  projects: [
+    {
+      name: "Split Task",
+      description: "Productivity app with combined calendar and to-do list pages.",
+      icon: "./assets/icon.png",
+      link: "#"
+    }
+  ]
+};
+
+document.getElementById("name").textContent = variables.name;
+document.getElementById("company").textContent = variables.company;
+document.getElementById("coffeeLink").href = variables.buyMeACoffeeUrl;
+
+const emailBtn = document.getElementById("emailBtn");
+emailBtn.href = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(variables.email)}`;
+
+const projects = document.getElementById("projects");
+variables.projects.forEach(project => {
+  projects.innerHTML += `
+    <a class="project-card" href="${project.link}" target="_blank">
+      <img class="project-icon" src="${project.icon}" alt="${project.name} icon">
+      <div>
+        <div class="project-name">${project.name}</div>
+        <div class="project-desc">${project.description}</div>
+      </div>
+    </a>
+  `;
+});
+</script>
+</body>
+</html>
