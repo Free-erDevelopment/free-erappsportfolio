@@ -145,6 +145,29 @@ body{
   color:var(--muted);
   margin-top:3px;
 }
+.about-title{
+  text-align:center;
+  color:var(--muted);
+  letter-spacing:3px;
+  font-size:14px;
+  font-weight:700;
+  margin-bottom:16px;
+}
+.about{
+  width:min(700px,100%);
+  margin:0 auto 48px;
+  padding:28px 34px;
+  border-radius:24px;
+  border:1.5px solid var(--border);
+  background:var(--card);
+}
+.about-text{
+  color:var(--muted);
+  font-size:16px;
+  line-height:1.6;
+  margin:0;
+  white-space:pre-wrap;
+}
 </style>
 </head>
 <body>
@@ -165,6 +188,10 @@ body{
     Support Development
   </a>
 </div>
+<div class="about-title">ABOUT ME</div>
+<div class="about">
+  <p class="about-text" id="aboutText"></p>
+</div>
 <div class="projects-title">PROJECTS</div>
 <div class="projects" id="projects"></div>
 </div>
@@ -174,6 +201,7 @@ const variables = {
   company: "Developing @ Free-er Apps",
   email: "freeerapps.dev@gmail.com",
   buyMeACoffeeUrl: "https://buymeacoffee.com/free.erapps",
+  about: "I am a high school developer focused on quality productivity software. When my academic workload increased, I relied on fragmented systems like Google Calendar and Microsoft To-Do to manage my schedule. While reliable, they lacked the advanced integration I needed. My search for an app that unified the best elements of scheduling and task management led to a frustrating realization: the market was split between outdated interfaces and overpriced subscription paywalls.\n\nThat’s when I decided to try something new: I started building my own solution from scratch. After hours of development revolving around usability and UI structure, I was faced with the challenge where most overcommit: I could try to create a cloud-based account system, or I could continue with local storage with long-term storage fatigue. I created an analytics system that doesn’t rely on mountains of storage to extract trends; instead, it takes snapshots and moves on, dealing with the possibility of slight inaccuracies over sacrificing an entirely free app.",
   projects: [
     {
       name: "Split Task",
@@ -187,6 +215,7 @@ const variables = {
 document.getElementById("name").textContent = variables.name;
 document.getElementById("company").textContent = variables.company;
 document.getElementById("coffeeLink").href = variables.buyMeACoffeeUrl;
+document.getElementById("aboutText").textContent = variables.about;
 
 const emailBtn = document.getElementById("emailBtn");
 emailBtn.href = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(variables.email)}`;
