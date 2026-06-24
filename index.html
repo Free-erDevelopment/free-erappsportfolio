@@ -9,9 +9,9 @@
   --bg:#f7f4ff;
   --card:#fdfcff;
   --text:#1a0a2e;
-  --muted:#7c3aed;
-  --accent:#8b00ff;
-  --border:#9333ea;
+  --muted:#20b846;
+  --accent:#00ff40;
+  --border:#33ea70;
 }
 *{box-sizing:border-box}
 body{
@@ -21,8 +21,7 @@ body{
   color:var(--text);
 }
 
-/* Particle canvas sits at z-index 0, behind everything */
-#particle-canvas{
+#lava-canvas{
   position:fixed;
   top:0;left:0;
   width:100%;height:100%;
@@ -187,7 +186,7 @@ body{
 </head>
 <body>
 
-<canvas id="particle-canvas"></canvas>
+<canvas id="lava-canvas"></canvas>
 
 <div class="container">
 <div class="profile-card">
@@ -252,100 +251,174 @@ variables.projects.forEach(project => {
   `;
 });
 
-/* ── Particle System ─────────────────────────────────────── */
-const canvas = document.getElementById('particle-canvas');
-const ctx    = canvas.getContext('2d');
+/* ── Lava Lamp Background ────────────────────────────────── */
+(function () {
+  const canvas = document.getElementById('lava-canvas');
+  const ctx    = canvas.getContext('2d');
+  const off    = document.createElement('canvas');
+  const octx   = off.getContext('2d');
 
-let W, H;
-function resize(){
-  W = canvas.width  = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', resize);
+  let W, H;
+  const RES = 4;
 
-let mx = W / 2, my = H / 2;
-window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-
-// Single vivid purple — one color only
-const PARTICLE_COLOR = 'rgba(139, 0, 255,';
-
-class Particle {
-  constructor(){
-    this.reset();
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    off.width  = Math.ceil(W / RES);
+    off.height = Math.ceil(H / RES);
   }
-  reset(){
-    this.x  = mx;
-    this.y  = my;
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 0.6 + Math.random() * 2.2;
-    this.vx = Math.cos(angle) * speed;
-    this.vy = Math.sin(angle) * speed - 0.6;
-    this.life  = 1.0;
-    this.decay = 0.022 + Math.random() * 0.030;
-    this.size  = 1.5 + Math.random() * 2.5;
-    this.glow  = 0.5 + Math.random() * 0.5;
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ── Blob factory ────────────────────────────────────────
+  function makeBlob(x, y, vx, vy, r) {
+    return {
+      x, y,
+      vx, vy,
+      r,
+      // gentle sinusoidal wobble layered on top of velocity
+      wxPhase: Math.random() * Math.PI * 2,
+      wyPhase: Math.random() * Math.PI * 2,
+      wxFreq:  0.00015 + Math.random() * 0.00015,
+      wyFreq:  0.00015 + Math.random() * 0.00015,
+      wxAmp:   0.010   + Math.random() * 0.010,
+      wyAmp:   0.010   + Math.random() * 0.010,
+    };
   }
-  update(){
-    this.x  += this.vx;
-    this.y  += this.vy;
-    this.vy += 0.06;
-    this.vx *= 0.97;
-    this.size *= 0.982;
-    this.life -= this.decay;
+
+  // Slower velocities — about half the previous speed
+  let blobs = [
+    makeBlob(0.20, 0.80, +0.00018, -0.00028, 0.130),
+    makeBlob(0.70, 0.75, -0.00020, -0.00022, 0.110),
+    makeBlob(0.45, 0.88, +0.00015, -0.00030, 0.140),
+    makeBlob(0.15, 0.55, -0.00012, +0.00025, 0.105),
+    makeBlob(0.80, 0.60, +0.00025, +0.00018, 0.120),
+    makeBlob(0.55, 0.30, -0.00018, +0.00022, 0.110),
+    makeBlob(0.35, 0.20, +0.00020, -0.00020, 0.125),
+    makeBlob(0.85, 0.40, -0.00015, -0.00025, 0.100),
+  ];
+
+  // ── Wall bounce (soft angle deflection) ──────────────────
+  const MARGIN = 0.04;
+  function softBounce(b) {
+    const skew = (Math.random() - 0.5) * 0.0004;
+    if (b.x < MARGIN   && b.vx < 0) { b.vx =  Math.abs(b.vx); b.vy += skew; }
+    if (b.x > 1-MARGIN && b.vx > 0) { b.vx = -Math.abs(b.vx); b.vy += skew; }
+    if (b.y < MARGIN   && b.vy < 0) { b.vy =  Math.abs(b.vy); b.vx += skew; }
+    if (b.y > 1-MARGIN && b.vy > 0) { b.vy = -Math.abs(b.vy); b.vx += skew; }
   }
-  draw(){
-    if(this.life <= 0) return;
-    const alpha = Math.max(0, this.life);
-    const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3 * this.glow);
-    g.addColorStop(0,   PARTICLE_COLOR + (alpha * 0.85) + ')');
-    g.addColorStop(0.4, PARTICLE_COLOR + (alpha * 0.30) + ')');
-    g.addColorStop(1,   PARTICLE_COLOR + '0)');
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 3 * this.glow, 0, Math.PI * 2);
-    ctx.fillStyle = g;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
-    ctx.fillStyle = PARTICLE_COLOR + (alpha * 0.9) + ')';
-    ctx.fill();
-  }
-}
 
-const MAX  = 40;
-const pool = [];
-for(let i = 0; i < MAX; i++) pool.push(new Particle());
-pool.forEach(p => { p.life = Math.random(); });
+  // ── Attraction / merging logic ───────────────────────────
+  // Blobs that are close enough attract each other and move together
+  // as a cluster. We use a centre-of-mass pull so they glide into
+  // each other and stay merged until natural drift pulls them apart.
+  // Critically: we do NOT remove or replace blobs — the metaball
+  // field naturally renders overlapping blobs as one unified shape.
+  function applyAttraction() {
+    const minDist = Math.min(W, H);
+    for (let i = 0; i < blobs.length; i++) {
+      for (let j = i + 1; j < blobs.length; j++) {
+        const a = blobs[i], b = blobs[j];
+        const dx = (b.x - a.x) * W;
+        const dy = (b.y - a.y) * H;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const combinedR = (a.r + b.r) * minDist;
 
-let spawnAccum = 0;
-const SPAWN_RATE = 1; // particles per frame — much calmer
+        // Attraction zone: within ~2.5× combined radii
+        if (dist < combinedR * 2.5 && dist > 0.1) {
+          // Strength increases as they get closer — pulls them into a group
+          const strength = 0.000008 * (1 - dist / (combinedR * 2.5));
+          const nx = dx / dist, ny = dy / dist;
+          a.vx += nx * strength;
+          a.vy += ny * strength;
+          b.vx -= nx * strength;
+          b.vy -= ny * strength;
+        }
 
-function loop(){
-  requestAnimationFrame(loop);
-  ctx.clearRect(0, 0, W, H);
-
-  // spawn fresh particles at cursor
-  spawnAccum += SPAWN_RATE;
-  let toSpawn = Math.floor(spawnAccum);
-  spawnAccum -= toSpawn;
-
-  let spawned = 0;
-  for(let i = 0; i < pool.length && spawned < toSpawn; i++){
-    if(pool[i].life <= 0){
-      pool[i].reset();
-      spawned++;
+        // Once deeply overlapping, velocity-align so they move as one
+        if (dist < combinedR * 0.6) {
+          const blend = 0.018;
+          const avgVx = (a.vx + b.vx) * 0.5;
+          const avgVy = (a.vy + b.vy) * 0.5;
+          a.vx += (avgVx - a.vx) * blend;
+          a.vy += (avgVy - a.vy) * blend;
+          b.vx += (avgVx - b.vx) * blend;
+          b.vy += (avgVy - b.vy) * blend;
+        }
+      }
     }
   }
 
-  ctx.save();
-  ctx.globalCompositeOperation = 'source-over';
-  for(const p of pool){
-    p.update();
-    p.draw();
+  // Speed cap so blobs never get flung around
+  const MAX_SPEED = 0.00040;
+  function capSpeed(b) {
+    const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+    if (spd > MAX_SPEED) {
+      b.vx = (b.vx / spd) * MAX_SPEED;
+      b.vy = (b.vy / spd) * MAX_SPEED;
+    }
   }
-  ctx.restore();
-}
-loop();
+
+  // ── Metaball render ──────────────────────────────────────
+  const THRESHOLD = 1.0;
+  const CR = 255, CG = 90, CB = 15;
+
+  let t = 0;
+
+  function drawLava() {
+    const ow = off.width, oh = off.height;
+    const imgData = octx.createImageData(ow, oh);
+    const data    = imgData.data;
+
+    const bw = blobs.map(b => ({
+      cx: b.x * W,
+      cy: b.y * H,
+      r2: (b.r * Math.min(W, H)) ** 2,
+    }));
+
+    for (let py = 0; py < oh; py++) {
+      for (let px = 0; px < ow; px++) {
+        const wx = (px + 0.5) * RES;
+        const wy = (py + 0.5) * RES;
+        let field = 0;
+        for (let i = 0; i < bw.length; i++) {
+          const dx = wx - bw[i].cx;
+          const dy = wy - bw[i].cy;
+          field += bw[i].r2 / (dx * dx + dy * dy + 1);
+        }
+        if (field > THRESHOLD) {
+          const idx    = (py * ow + px) * 4;
+          const excess = Math.min((field - THRESHOLD) * 3.5, 1.0);
+          data[idx]     = CR;
+          data[idx + 1] = CG;
+          data[idx + 2] = CB;
+          data[idx + 3] = Math.round(150 * excess);
+        }
+      }
+    }
+    octx.putImageData(imgData, 0, 0);
+  }
+
+  function loop() {
+    requestAnimationFrame(loop);
+
+    applyAttraction();
+
+    for (const b of blobs) {
+      b.x += b.vx + Math.sin(t * b.wxFreq + b.wxPhase) * b.wxAmp * 0.008;
+      b.y += b.vy + Math.sin(t * b.wyFreq + b.wyPhase) * b.wyAmp * 0.008;
+      softBounce(b);
+      capSpeed(b);
+    }
+
+    ctx.clearRect(0, 0, W, H);
+    drawLava();
+    ctx.drawImage(off, 0, 0, W, H);
+    t++;
+  }
+
+  loop();
+})();
 </script>
 </body>
 </html>
